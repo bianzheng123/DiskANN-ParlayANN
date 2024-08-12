@@ -152,6 +152,7 @@ struct knn_index {
       int degree = BP.single_batch;
       std::cout << "Using single batch per round with " << degree << " random start edges" << std::endl;
       parlay::random_generator gen;
+      gen.seed(0);
       std::uniform_int_distribution<long> dis(0, G.size());
       parlay::parallel_for(0, G.size(), [&] (long i) {
         std::vector<indexType> outEdges(degree);

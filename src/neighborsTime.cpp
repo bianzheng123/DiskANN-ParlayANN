@@ -24,15 +24,15 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parse_command_line.h"
-#include "time_loop.h"
+#include "bench/parse_command_line.h"
+#include "bench/time_loop.h"
 #include "utils/NSGDist.h"
 #include "utils/euclidian_point.h"
 #include "utils/point_range.h"
 #include "utils/mips_point.h"
 #include "utils/graph.h"
 
-#include "vamana/index.h"
+//#include "vamana/index.h"
 #include "vamana/neighbors.h"
 
 
