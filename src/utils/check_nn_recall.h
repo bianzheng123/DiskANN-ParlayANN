@@ -39,7 +39,6 @@ nn_result checkRecall(
         QPointRange &Q_Base_Points,
         QPointRange &Q_Query_Points,
         groundTruth<indexType> GT,
-        bool random,
         long start_point,
         long k,
         QueryParams &QP,
@@ -59,13 +58,8 @@ nn_result checkRecall(
     // to help clear the cache between runs
     auto volatile xx = parlay::random_permutation<long>(5000000);
     t.next_time();
-    if (random) {
-        all_ngh = beamSearchRandom<Point, PointRange, indexType>(Query_Points, G, Base_Points, QueryStats, QP);
-    } else {
-        // go through this
-        all_ngh = qsearchAll<Point, PointRange, QPointRange, indexType>(Query_Points, Q_Query_Points, G, Base_Points,
-                                                                        Q_Base_Points, QueryStats, start_point, QP);
-    }
+    all_ngh = qsearchAll<Point, PointRange, QPointRange, indexType>(Query_Points, Q_Query_Points, G, Base_Points,
+                                                                    Q_Base_Points, QueryStats, start_point, QP);
     query_time = t.next_time();
 
     float recall = 0.0;
@@ -178,7 +172,7 @@ void search_and_parse(Graph_ G_,
                       QPointRange &Q_Base_Points,
                       QPointRange &Q_Query_Points,
                       groundTruth<indexType> GT, char *res_file, long k,
-                      bool random = true, indexType start_point = 0,
+                      indexType start_point = 0,
                       bool verbose = false) {
     parlay::sequence<nn_result> results;
     std::vector<long> beams;
@@ -206,7 +200,7 @@ void search_and_parse(Graph_ G_,
                     results.push_back(
                             checkRecall<Point, PointRange, QPointRange, indexType>(G, Base_Points, Query_Points,
                                                                                    Q_Base_Points, Q_Query_Points, GT,
-                                                                                   random, start_point, r, QP,
+                                                                                   start_point, r, QP,
                                                                                    verbose));
                 }
             }
@@ -226,7 +220,7 @@ void search_and_parse(Graph_ G_,
                 results.push_back(checkRecall<Point, PointRange, QPointRange, indexType>(G,
                                                                                          Base_Points, Query_Points,
                                                                                          Q_Base_Points, Q_Query_Points,
-                                                                                         GT, random, start_point, r, QP,
+                                                                                         GT, start_point, r, QP,
                                                                                          verbose));
             }
         }
@@ -234,7 +228,7 @@ void search_and_parse(Graph_ G_,
         QP = QueryParams((long) 100, (long) 1000, (double) 10.0, (long) G.size(), (long) G.max_degree());
         results.push_back(
                 checkRecall<Point, PointRange, QPointRange, indexType>(G, Base_Points, Query_Points, Q_Base_Points,
-                                                                       Q_Query_Points, GT, random, start_point, r, QP,
+                                                                       Q_Query_Points, GT, start_point, r, QP,
                                                                        verbose));
 
         parlay::sequence<float> buckets = {.1, .2, .3, .4, .5, .6, .7, .75, .8, .85,
@@ -253,10 +247,10 @@ void search_and_parse(Graph_ G_,
                       PointRange &Base_Points,
                       PointRange &Query_Points,
                       groundTruth<indexType> GT, char *res_file, long k,
-                      bool random = true, indexType start_point = 0,
+                      indexType start_point = 0,
                       bool verbose = false) {
     search_and_parse<Point>(G_, G, Base_Points, Query_Points, Base_Points, Query_Points, GT,
-                            res_file, k, random, start_point, verbose);
+                            res_file, k, start_point, verbose);
 }
 
 

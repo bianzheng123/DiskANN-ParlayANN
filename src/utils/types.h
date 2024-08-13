@@ -100,86 +100,25 @@ struct groundTruth {
 
 };
 
-template<typename T>
-struct RangeGroundTruth {
-    T *coords;
-    parlay::sequence<T> offsets;
-    parlay::slice<T *, T *> sizes;
-    size_t n;
-    size_t num_matches;
-
-    RangeGroundTruth() : sizes(parlay::make_slice<T *, T *>(nullptr, nullptr)) {}
-
-    RangeGroundTruth(char *gtFile) : sizes(parlay::make_slice<T *, T *>(nullptr, nullptr)) {
-        if (gtFile == NULL) {
-            n = 0;
-            num_matches = 0;
-        } else {
-            auto [fileptr, length] = mmapStringFromFile(gtFile);
-
-            n = *((T *) fileptr);
-            num_matches = *((T *) (fileptr + sizeof(T)));
-
-            T *sizes_begin = (T *) (fileptr + 2 * sizeof(T));
-            T *sizes_end = sizes_begin + n;
-            sizes = parlay::make_slice(sizes_begin, sizes_end);
-
-            auto [offsets0, total] = parlay::scan(sizes);
-            offsets0.push_back(total);
-            offsets = offsets0;
-
-            std::cout << "Detected " << n << " points with num matches " << num_matches << std::endl;
-
-            coords = sizes_end;
-        }
-    }
-
-    parlay::slice<T *, T *> operator[](long i) {
-        T *begin = coords + offsets[i];
-        T *end = coords + offsets[i + 1];
-        return parlay::make_slice(begin, end);
-    }
-
-    size_t size() { return n; }
-
-    size_t matches() { return num_matches; }
-};
-
-
 struct BuildParams {
     long L; //vamana
-    long R; //vamana and pynnDescent
-    double m_l = 0; // HNSW
-    double alpha; //vamana and pyNNDescent
+    long R; //vamana
+    double alpha; //vamana
     int num_passes; //vamana
     int single_batch; //vamana
 
-    long num_clusters; // HCNNG and pyNNDescent
-    long cluster_size; //HCNNG and pyNNDescent
-    long MST_deg; //HCNNG
-
-    double delta; //pyNNDescent
-
     bool verbose;
-
-    bool quantize; // use quantization for build
-    double radius; // for radius search
-    double radius_2; // for radius search
-    bool self;
-    bool range;
 
     std::string alg_type;
 
-    BuildParams(long R, long L, double a, int num_passes, long nc, long cs, long mst, double de,
-                bool verbose = false, bool quantize = false, double radius = 0.0, double radius_2 = 0.0,
-                bool self = false, bool range = false, int single_batch = 0)
-            : R(R), L(L), alpha(a), num_passes(num_passes), num_clusters(nc), cluster_size(cs), MST_deg(mst), delta(de),
-              verbose(verbose), quantize(quantize), radius(radius), radius_2(radius_2), self(self), range(range),
+    BuildParams(long R, long L, double a, int num_passes,
+                bool verbose = false,
+                int single_batch = 0)
+            : R(R), L(L), alpha(a), num_passes(num_passes),
+              verbose(verbose),
               single_batch(single_batch) {
-        if (R != 0 && L != 0 && alpha != 0) { alg_type = m_l > 0 ? "HNSW" : "Vamana"; }
-        else if (num_clusters != 0 && cluster_size != 0 && MST_deg != 0) { alg_type = "HCNNG"; }
-        else if (R != 0 && alpha != 0 && num_clusters != 0 && cluster_size != 0 &&
-                 delta != 0) { alg_type = "pyNNDescent"; }
+        assert(R != 0 && L != 0 && alpha != 0);
+        alg_type = "Vamana";
     }
 
     BuildParams() {}
@@ -187,20 +126,8 @@ struct BuildParams {
     BuildParams(long R, long L, double a, int num_passes, bool verbose = false)
             : R(R), L(L), alpha(a), num_passes(num_passes), single_batch(0), verbose(verbose) { alg_type = "Vamana"; }
 
-    BuildParams(long R, long L, double m_l, double a)
-            : R(R), L(L), m_l(m_l), alpha(a), verbose(false) { alg_type = "HNSW"; }
-
-    BuildParams(long nc, long cs, long mst)
-            : num_clusters(nc), cluster_size(cs), MST_deg(mst), verbose(false) { alg_type = "HCNNG"; }
-
-    BuildParams(long R, double a, long nc, long cs, double de)
-            : R(R), alpha(a), num_clusters(nc), cluster_size(cs), delta(de),
-              verbose(false) { alg_type = "pyNNDescent"; }
-
     long max_degree() {
-        if (alg_type == "HCNNG") return num_clusters * MST_deg;
-        else if (alg_type == "HNSW") return R * 2;
-        else return R;
+        return R;
     }
 };
 
@@ -218,37 +145,6 @@ struct QueryParams {
 
     QueryParams() {}
 
-};
-
-struct RangeParams {
-    double rad;
-    long initial_beam;
-
-    RangeParams(double rad, long ib) : rad(rad), initial_beam(ib) {}
-
-    RangeParams() {}
-
-    void print() {
-        std::cout << "Beam: " << initial_beam;
-    }
-
-};
-
-
-template<typename T, typename Point>
-class Desc_HNSW {
-public:
-    typedef T type_elem;
-    typedef Point type_point;
-
-    static auto distance(const type_point &u, const type_point &v, uint32_t dim) {
-        (void) dim;
-        return u.distance(v);
-    }
-
-    static auto get_id(const type_point &u) {
-        return u.id();
-    }
 };
 
 #endif

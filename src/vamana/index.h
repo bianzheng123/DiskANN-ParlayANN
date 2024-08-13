@@ -149,6 +149,7 @@ struct knn_index {
         parlay::sequence<indexType> inserts = parlay::tabulate(Points.size(), [&](size_t i) {
             return static_cast<indexType>(i);
         });
+        printf("BP.single_batch = %d\n", BP.single_batch);
         if (BP.single_batch != 0) {
             // it builds a random graph, not used in the parameter settings
             printf("in build_index, not use the single_batch\n");
