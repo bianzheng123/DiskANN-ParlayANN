@@ -48,6 +48,7 @@ void ANN_(Graph<indexType> &G, long k, BuildParams &BP,
     findex I(BP);
     indexType start_point;
     double idx_time;
+    // declare two array, visited and distances
     stats<unsigned int> BuildStats(G.size());
     if (graph_built) {
         idx_time = 0;

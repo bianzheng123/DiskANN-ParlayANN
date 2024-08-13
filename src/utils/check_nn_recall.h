@@ -62,6 +62,7 @@ nn_result checkRecall(
     if (random) {
         all_ngh = beamSearchRandom<Point, PointRange, indexType>(Query_Points, G, Base_Points, QueryStats, QP);
     } else {
+        // go through this
         all_ngh = qsearchAll<Point, PointRange, QPointRange, indexType>(Query_Points, Q_Query_Points, G, Base_Points,
                                                                         Q_Base_Points, QueryStats, start_point, QP);
     }

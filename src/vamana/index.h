@@ -150,6 +150,8 @@ struct knn_index {
             return static_cast<indexType>(i);
         });
         if (BP.single_batch != 0) {
+            // it builds a random graph, not used in the parameter settings
+            printf("in build_index, not use the single_batch\n");
             int degree = BP.single_batch;
             std::cout << "Using single batch per round with " << degree << " random start edges" << std::endl;
             parlay::random_generator gen;
@@ -169,6 +171,7 @@ struct knn_index {
         std::cout << "number of passes = " << BP.num_passes << std::endl;
         for (int i = 0; i < BP.num_passes; i++) {
             if (i == BP.num_passes - 1)
+                // only this branch
                 batch_insert(inserts, G, Points, BuildStats, BP.alpha, true, 2, .02);
             else
                 batch_insert(inserts, G, Points, BuildStats, 1.0, true, 2, .02);
@@ -195,6 +198,9 @@ struct knn_index {
                 abort();
             }
         }
+        // the index type is the pointID, at this time it is uint32_t
+        // n means the number of total points
+        // m means the number of point to be inserted
         size_t n = G.size();
         size_t m = inserts.size();
         size_t inc = 0;
@@ -205,11 +211,12 @@ struct knn_index {
                 static_cast<size_t>(max_fraction * static_cast<float>(n)), 1000000ul);
         //fix bug where max batch size could be set to zero
         if (max_batch_size == 0) max_batch_size = n;
-        parlay::sequence<int> rperm;
+        parlay::sequence<int> rperm; // random permutation, permutation of n_insert_pointID
         if (random_order)
             rperm = parlay::random_permutation<int>(static_cast<int>(m));
         else
             rperm = parlay::tabulate(m, [&](int i) { return i; });
+        // shuffle the insert sequence
         auto shuffled_inserts =
                 parlay::tabulate(m, [&](size_t i) { return inserts[rperm[i]]; });
         parlay::internal::timer t_beam("beam search time");
@@ -221,6 +228,7 @@ struct knn_index {
         while (count < m) {
             size_t floor;
             size_t ceiling;
+            // floor and ceiling means the start vertexID and end vertexID that needed to be inserted
             if (pow(base, inc) <= max_batch_size) {
                 floor = static_cast<size_t>(pow(base, inc)) - 1;
                 ceiling = std::min(static_cast<size_t>(pow(base, inc + 1)) - 1, m);

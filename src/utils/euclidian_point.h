@@ -83,6 +83,7 @@ float euclidian_distance(const float *p, const float *q, unsigned d) {
     return distfunc.compare(p, q, d);
 }
 
+// this looks like the union of the array
 template<typename T, long range = (1l << sizeof(T) * 8) - 1>
 struct Euclidian_Point {
     using distanceType = float;

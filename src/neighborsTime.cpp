@@ -155,11 +155,15 @@ int main(int argc, char *argv[]) {
             Graph<unsigned int> G;
             if (gFile == NULL) G = Graph<unsigned int>(maxDeg, Points.size());
             else G = Graph<unsigned int>(gFile);
+            // quantize means the scalar quantization
             if (quantize == 8) {
                 std::cout << "quantizing data to 1 byte" << std::endl;
                 using QT = uint8_t;
                 using QPoint = Euclidian_Point<QT>;
                 using PR = PointRange<QT, QPoint>;
+                // the constructor will find the minimum val and max val of all point and then traverse into the scalar code
+                // first call generate_parameters to find the min val and max val
+                // second call translate point to encode the point
                 PR Points_(Points);
                 PR Query_Points_(Query_Points, Points_.params);
                 timeNeighbors<QPoint, PR, uint>(G, Query_Points_, k, BP, oFile, GT, rFile, graph_built, Points_);
