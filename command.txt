@@ -23,31 +23,31 @@ make
 
 in the build directory
 build the graph index:
-./main -R 32 -L 64 -alpha 1.2 two_pass 0 -graph_outfile ../data/siftsmall/siftsmall_learn_32_64 -data_type float -dist_func Euclidian -base_path ../data/siftsmall/siftsmall_learn.fbin
+./main -R 32 -L 64 -alpha 1.2 -graph_outfile ../data/siftsmall/siftsmall_learn_32_64 -dist_func Euclidian -base_path ../data/siftsmall/siftsmall_learn.fbin
 
 retrieval:
-./main -R 32 -L 64 -a 1.2 -graph_path ../data/siftsmall/siftsmall_learn_32_64 -query_path ../data/siftsmall/siftsmall_query.fbin -gt_path ../data/siftsmall/siftsmall-100K -data_type float -dist_func Euclidian -base_path ../data/siftsmall/siftsmall_learn.fbin
+./main -R 32 -L 64 -a 1.2 -graph_path ../data/siftsmall/siftsmall_learn_32_64 -query_path ../data/siftsmall/siftsmall_query.fbin -gt_path ../data/siftsmall/siftsmall-100K -dist_func Euclidian -base_path ../data/siftsmall/siftsmall_learn.fbin
 
 
 Graph has average degree 26.5858 and maximum degree 32
 Graph built in 0 seconds
-For 10@10 recall = 0.129, QPS = 330033, Q = 10, cut = 1.35, visited limit = 6, degree limit: 12, average visited = 6, average cmps = 76
-For 10@10 recall = 0.29, QPS = 271003, Q = 10, cut = 1.35, visited limit = 6, degree limit: 19, average visited = 6, average cmps = 114
-For 10@10 recall = 0.319, QPS = 270270, Q = 10, cut = 1.35, visited limit = 9, degree limit: 12, average visited = 9, average cmps = 103
-For 10@10 recall = 0.452, QPS = 233100, Q = 10, cut = 1.35, visited limit = 9, degree limit: 16, average visited = 9, average cmps = 134
-For 10@10 recall = 0.551, QPS = 211864, Q = 10, cut = 1.35, visited limit = 7, degree limit: 25, average visited = 7, average cmps = 163
-For 10@10 recall = 0.681, QPS = 198020, Q = 10, cut = 1.35, visited limit = 9, degree limit: 22, average visited = 9, average cmps = 180
-For 10@10 recall = 0.721, QPS = 176056, Q = 10, cut = 1.35, visited limit = 9, degree limit: 25, average visited = 9, average cmps = 198
-For 10@10 recall = 0.776, QPS = 174216, Q = 10, cut = 1.35, visited limit = 9, degree limit: 28, average visited = 9, average cmps = 214
-For 10@10 recall = 0.841, QPS = 164204, Q = 10, cut = 1.35, visited limit = 9, degree limit: 32, average visited = 9, average cmps = 231
-For 10@10 recall = 0.876, QPS = 151286, Q = 12, cut = 1.35, visited limit = 12, degree limit: 25, average visited = 12, average cmps = 250
-For 10@10 recall = 0.912, QPS = 137741, Q = 12, cut = 1.35, visited limit = 12, degree limit: 28, average visited = 12, average cmps = 269
-For 10@10 recall = 0.943, QPS = 126582, Q = 12, cut = 1.35, visited limit = 12, degree limit: 32, average visited = 12, average cmps = 292
-For 10@10 recall = 0.956, QPS = 124378, Q = 13, cut = 1.35, visited limit = 13, degree limit: 32, average visited = 13, average cmps = 312
-For 10@10 recall = 0.974, QPS = 111982, Q = 12, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 16, average cmps = 372
-For 10@10 recall = 0.982, QPS = 106157, Q = 14, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 18, average cmps = 408
-For 10@10 recall = 0.991, QPS = 71326.7, Q = 24, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 28, average cmps = 575
-For 10@10 recall = 0.996, QPS = 48899.8, Q = 40, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 43, average cmps = 831
-For 10@10 recall = 1, QPS = 25169.9, Q = 80, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 77, average cmps = 1285
+For 10@10 recall = 0.129, QPS = 342466, Q = 10, cut = 1.35, visited limit = 6, degree limit: 12, average visited = 6, average cmps = 76
+For 10@10 recall = 0.3, QPS = 273224, Q = 10, cut = 1.35, visited limit = 7, degree limit: 16, average visited = 7, average cmps = 110
+For 10@10 recall = 0.319, QPS = 274725, Q = 10, cut = 1.35, visited limit = 9, degree limit: 12, average visited = 9, average cmps = 103
+For 10@10 recall = 0.452, QPS = 248139, Q = 10, cut = 1.35, visited limit = 9, degree limit: 16, average visited = 9, average cmps = 134
+For 10@10 recall = 0.517, QPS = 218341, Q = 10, cut = 1.35, visited limit = 9, degree limit: 19, average visited = 9, average cmps = 157
+For 10@10 recall = 0.678, QPS = 195312, Q = 10, cut = 1.35, visited limit = 7, degree limit: 32, average visited = 7, average cmps = 192
+For 10@10 recall = 0.721, QPS = 175439, Q = 10, cut = 1.35, visited limit = 9, degree limit: 25, average visited = 9, average cmps = 198
+For 10@10 recall = 0.776, QPS = 176367, Q = 10, cut = 1.35, visited limit = 9, degree limit: 28, average visited = 9, average cmps = 214
+For 10@10 recall = 0.848, QPS = 135685, Q = 10, cut = 1.35, visited limit = 10, degree limit: 28, average visited = 10, average cmps = 232
+For 10@10 recall = 0.863, QPS = 132100, Q = 13, cut = 1.35, visited limit = 13, degree limit: 22, average visited = 13, average cmps = 243
+For 10@10 recall = 0.912, QPS = 142653, Q = 12, cut = 1.35, visited limit = 12, degree limit: 28, average visited = 12, average cmps = 269
+For 10@10 recall = 0.943, QPS = 131406, Q = 12, cut = 1.35, visited limit = 12, degree limit: 32, average visited = 12, average cmps = 292
+For 10@10 recall = 0.956, QPS = 99403.6, Q = 13, cut = 1.35, visited limit = 13, degree limit: 32, average visited = 13, average cmps = 312
+For 10@10 recall = 0.974, QPS = 111732, Q = 12, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 16, average cmps = 372
+For 10@10 recall = 0.981, QPS = 108342, Q = 13, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 17, average cmps = 390
+For 10@10 recall = 0.991, QPS = 77700.1, Q = 24, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 28, average cmps = 575
+For 10@10 recall = 0.995, QPS = 52192.1, Q = 38, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 41, average cmps = 797
+For 10@10 recall = 1, QPS = 26082.4, Q = 80, cut = 1.35, visited limit = 25000, degree limit: 32, average visited = 77, average cmps = 1285
 
-Parlay time: 2.4781
+Parlay time: 2.5296

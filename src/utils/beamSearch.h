@@ -270,6 +270,7 @@ beam_search_rerank(const Point &p,
 }
 
 
+// function with only a start point
 template<typename Point, typename PointRange, typename QPointRange, typename indexType>
 parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Points,
                                                          QPointRange &Q_Query_Points,
@@ -283,6 +284,7 @@ parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Point
                                                                  Q_Base_Points, QueryStats, start_points, QP);
 }
 
+// function with a set of start point
 template<typename Point, typename PointRange, typename QPointRange, typename indexType>
 parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Points,
                                                          QPointRange &Q_Query_Points,

@@ -78,7 +78,6 @@ int main(int argc, char *argv[]) {
                   "[-a <alpha>] [-R <deg>]"
                   "[-L <bm>] [-k <k> ]  [-gt_path <g>] [-query_path <qF>]"
                   "[-graph_path <gF>] [-graph_outfile <oF>] [-res_path <rF>]" "[-num_passes <np>]"
-                  "[-memory_flag <algoOpt>]"
                   "[-dist_func <df>] [-base_path <b>] <inFile>");
 
     char *iFile = P.getOptionValue("-base_path");
@@ -95,15 +94,10 @@ int main(int argc, char *argv[]) {
     if (k > 1000 || k < 0) P.badArgument();
     double alpha = P.getOptionDoubleValue("-alpha", 1.0);
     int num_passes = P.getOptionIntValue("-num_passes", 1);
-    int two_pass = P.getOptionIntValue("-two_pass", 0);
-    if (two_pass > 1 | two_pass < 0) P.badArgument();
-    if (two_pass == 1) num_passes = 2;
     char *dfc = P.getOptionValue("-dist_func");
     bool verbose = P.getOption("-verbose");
     bool normalize = P.getOption("-normalize");
     int single_batch = P.getOptionIntValue("-single_batch", 0);
-
-    printf("------------------- can here\n");
 
     std::string df = std::string(dfc);
 
