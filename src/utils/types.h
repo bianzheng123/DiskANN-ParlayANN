@@ -111,12 +111,10 @@ struct BuildParams {
 
     std::string alg_type;
 
-    BuildParams(long R, long L, double a, int num_passes,
-                bool verbose = false,
-                int single_batch = 0)
-            : R(R), L(L), alpha(a), num_passes(num_passes),
-              verbose(verbose),
-              single_batch(single_batch) {
+    BuildParams(long R, long L, double a, int num_passes, int single_batch = 0,
+                bool verbose = false)
+            : R(R), L(L), alpha(a), num_passes(num_passes), single_batch(single_batch),
+              verbose(verbose) {
         assert(R != 0 && L != 0 && alpha != 0);
         alg_type = "Vamana";
     }
