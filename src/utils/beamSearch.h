@@ -38,9 +38,9 @@
 #include "stats.h"
 
 // main beam search
-template<typename indexType, typename Point, typename PointRange, class GT>
+template<typename indexType, typename Point, typename PointRange>
 std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::distanceType>>, parlay::sequence<std::pair<indexType, typename Point::distanceType>>>, size_t>
-beam_search_impl(Point p, GT &G, PointRange &Points,
+beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
                  parlay::sequence<indexType> starting_points, QueryParams &QP);
 
 template<typename Point, typename PointRange, typename indexType>
@@ -60,9 +60,9 @@ beam_search(Point p, Graph<indexType> &G, PointRange &Points,
 }
 
 // main beam search
-template<typename indexType, typename Point, typename PointRange, class GT>
+template<typename indexType, typename Point, typename PointRange>
 std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::distanceType>>, parlay::sequence<std::pair<indexType, typename Point::distanceType>>>, size_t>
-beam_search_impl(Point p, GT &G, PointRange &Points,
+beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
                  parlay::sequence<indexType> starting_points, QueryParams &QP) {
     if (starting_points.size() == 0) {
         std::cout << "beam search expects at least one start point" << std::endl;
@@ -270,7 +270,6 @@ beam_search_rerank(const Point &p,
 }
 
 
-// function with only a start point
 template<typename Point, typename PointRange, typename QPointRange, typename indexType>
 parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Points,
                                                          QPointRange &Q_Query_Points,
@@ -284,7 +283,6 @@ parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Point
                                                                  Q_Base_Points, QueryStats, start_points, QP);
 }
 
-// function with a set of start point
 template<typename Point, typename PointRange, typename QPointRange, typename indexType>
 parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Points,
                                                          QPointRange &Q_Query_Points,
@@ -305,6 +303,12 @@ parlay::sequence<parlay::sequence<indexType>> qsearchAll(PointRange &Query_Point
                                               Base_Points, Q_Base_Points,
                                               QueryStats, starting_points, QP);
     });
+
+//    for (uint32_t i = 0; i < Query_Points.size(); i++) {
+//        all_neighbors[i] = beam_search_rerank(Query_Points[i], Q_Query_Points[i], G,
+//                                              Base_Points, Q_Base_Points,
+//                                              QueryStats, starting_points, QP);
+//    }
 
     return all_neighbors;
 }
