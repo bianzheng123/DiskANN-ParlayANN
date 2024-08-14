@@ -62,50 +62,32 @@ nn_result checkRecall(
                                                                     Q_Base_Points, QueryStats, start_point, QP);
     query_time = t.next_time();
 
-    float recall = 0.0;
-    //TODO deprecate this after further testing
-    bool dists_present = true;
-    if (GT.size() > 0 && !dists_present) {
-        size_t n = Query_Points.size();
-        int numCorrect = 0;
-        for (indexType i = 0; i < n; i++) {
-            std::set<indexType> reported_nbhs;
-            for (indexType l = 0; l < k; l++) reported_nbhs.insert((all_ngh[i])[l]);
-            for (indexType l = 0; l < k; l++) {
-                if (reported_nbhs.find((GT.coordinates(i, l))) !=
-                    reported_nbhs.end()) {
-                    numCorrect += 1;
-                }
-            }
-        }
-        recall = static_cast<float>(numCorrect) / static_cast<float>(k * n);
-    } else if (GT.size() > 0 && dists_present) {
-        size_t n = Query_Points.size();
+    size_t n = Query_Points.size();
 
-        int numCorrect = 0;
-        for (indexType i = 0; i < n; i++) {
-            parlay::sequence<int> results_with_ties;
-            for (indexType l = 0; l < k; l++)
+    // compute recall
+    int numCorrect = 0;
+    for (indexType i = 0; i < n; i++) {
+        parlay::sequence<int> results_with_ties;
+        for (indexType l = 0; l < k; l++)
+            results_with_ties.push_back(GT.coordinates(i, l));
+        Point qp = Query_Points[i];
+        float last_dist = qp.distance(Base_Points[GT.coordinates(i, k - 1)]);
+        //float last_dist = GT.distances(i, k-1);
+        for (indexType l = k; l < GT.dimension(); l++) {
+            //if (GT.distances(i,l) == last_dist) {
+            if (qp.distance(Base_Points[GT.coordinates(i, l)]) == last_dist) {
                 results_with_ties.push_back(GT.coordinates(i, l));
-            Point qp = Query_Points[i];
-            float last_dist = qp.distance(Base_Points[GT.coordinates(i, k - 1)]);
-            //float last_dist = GT.distances(i, k-1);
-            for (indexType l = k; l < GT.dimension(); l++) {
-                //if (GT.distances(i,l) == last_dist) {
-                if (qp.distance(Base_Points[GT.coordinates(i, l)]) == last_dist) {
-                    results_with_ties.push_back(GT.coordinates(i, l));
-                }
-            }
-            std::set<int> reported_nbhs;
-            for (indexType l = 0; l < k; l++) reported_nbhs.insert((all_ngh[i])[l]);
-            for (indexType l = 0; l < results_with_ties.size(); l++) {
-                if (reported_nbhs.find(results_with_ties[l]) != reported_nbhs.end()) {
-                    numCorrect += 1;
-                }
             }
         }
-        recall = static_cast<float>(numCorrect) / static_cast<float>(k * n);
+        std::set<int> reported_neighbor_s;
+        for (indexType l = 0; l < k; l++) reported_neighbor_s.insert((all_ngh[i])[l]);
+        for (indexType l = 0; l < results_with_ties.size(); l++) {
+            if (reported_neighbor_s.find(results_with_ties[l]) != reported_neighbor_s.end()) {
+                numCorrect += 1;
+            }
+        }
     }
+    const float recall = static_cast<float>(numCorrect) / static_cast<float>(k * n);
     float QPS = Query_Points.size() / query_time;
     if (verbose)
         std::cout << "search: Q=" << QP.beamSize << ", k=" << QP.k

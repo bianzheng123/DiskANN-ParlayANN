@@ -139,8 +139,8 @@ beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
         // not bump anyone else.
         candidates.clear();
         keep.clear();
-        long num_elts = std::min<long>(G[current.first].size(), QP.degree_limit);
-        for (indexType i = 0; i < num_elts; i++) {
+        long num_ele = std::min<long>(G[current.first].size(), QP.degree_limit);
+        for (indexType i = 0; i < num_ele; i++) {
             auto a = G[current.first][i];
             if (has_been_seen(a) || Points[a].same_as(p)) continue;  // skip if already seen
             keep.push_back(a);
