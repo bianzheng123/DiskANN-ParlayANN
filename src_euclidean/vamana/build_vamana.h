@@ -39,27 +39,27 @@
 #include "../utils/beamSearch.h"
 
 
-template<typename PointRange, typename indexType>
+template<typename index_t>
 struct knn_index {
     using Point = typename PointRange::Point;
-    using distanceType = typename Point::distanceType;
-    using pid = std::pair<indexType, distanceType>;
+    using dist_t = typename Point::dist_t;
+    using pid = std::pair<index_t, dist_t>;
     using PR = PointRange;
-    using GraphI = Graph<indexType>;
+    using GraphI = Graph<index_t>;
 
     BuildParams BP;
-    std::set<indexType> delete_set;
-    indexType start_point;
+    std::set<index_t> delete_set;
+    index_t start_point;
 
     knn_index(BuildParams &BP) : BP(BP) {}
 
-    indexType get_start() { return start_point; }
+    index_t get_start() { return start_point; }
 
     //robustPrune routine as found in DiskANN paper, with the exception
     //that the new candidate set is added to the field new_nbhs instead
     //of directly replacing the out_nbh of p
-    std::pair<parlay::sequence<indexType>, long>
-    robustPrune(indexType p, parlay::sequence<pid> &cand,
+    std::pair<parlay::sequence<index_t>, long>
+    robustPrune(index_t p, parlay::sequence<pid> &cand,
                 GraphI &G, PR &Points, double alpha, bool add = true) {
         // add out neighbors of p to the candidate set.
         size_t out_size = G[p].size();
@@ -83,7 +83,7 @@ struct knn_index {
                                    [&](auto x, auto y) { return x.first == y.first; });
         candidates = std::vector(candidates.begin(), new_end);
 
-        std::vector<indexType> new_nbhs;
+        std::vector<index_t> new_nbhs;
         new_nbhs.reserve(BP.R);
 
         size_t candidate_idx = 0;
@@ -102,8 +102,8 @@ struct knn_index {
                 int p_prime = candidates[i].first;
                 if (p_prime != -1) {
                     distance_comps++;
-                    distanceType dist_starprime = Points[p_star].distance(Points[p_prime]);
-                    distanceType dist_pprime = candidates[i].second;
+                    dist_t dist_starprime = Points[p_star].distance(Points[p_prime]);
+                    dist_t dist_pprime = candidates[i].second;
                     if (alpha * dist_starprime <= dist_pprime) {
                         candidates[i].first = -1;
                     }
@@ -117,8 +117,8 @@ struct knn_index {
 
     //wrapper to allow calling robustPrune on a sequence of candidates
     //that do not come with precomputed distances
-    std::pair<parlay::sequence<indexType>, long>
-    robustPrune(indexType p, parlay::sequence<indexType> candidates,
+    std::pair<parlay::sequence<index_t>, long>
+    robustPrune(index_t p, parlay::sequence<index_t> candidates,
                 GraphI &G, PR &Points, double alpha, bool add = true) {
 
         parlay::sequence<pid> cc;
@@ -135,7 +135,7 @@ struct knn_index {
     // add ngh to candidates without adding any repeats
     template<typename rangeType1, typename rangeType2>
     void add_neighbors_without_repeats(const rangeType1 &ngh, rangeType2 &candidates) {
-        std::unordered_set<indexType> a;
+        std::unordered_set<index_t> a;
         for (auto c: candidates) a.insert(c);
         for (int i = 0; i < ngh.size(); i++)
             if (a.count(ngh[i]) == 0) candidates.push_back(ngh[i]);
@@ -143,11 +143,11 @@ struct knn_index {
 
     void set_start() { start_point = 0; }
 
-    void build_index(GraphI &G, PR &Points, stats<indexType> &BuildStats, bool sort_neighbors = true) {
+    void build_index(GraphI &G, PR &Points, stats<index_t> &BuildStats, bool sort_neighbors = true) {
         std::cout << "Building graph..." << std::endl;
         set_start();
-        parlay::sequence<indexType> inserts = parlay::tabulate(Points.size(), [&](size_t i) {
-            return static_cast<indexType>(i);
+        parlay::sequence<index_t> inserts = parlay::tabulate(Points.size(), [&](size_t i) {
+            return static_cast<index_t>(i);
         });
         printf("BP.single_batch = %d\n", BP.single_batch);
         if (BP.single_batch != 0) {
@@ -159,7 +159,7 @@ struct knn_index {
             gen.seed(0);
             std::uniform_int_distribution<long> dis(0, G.size());
             parlay::parallel_for(0, G.size(), [&](long i) {
-                std::vector<indexType> outEdges(degree);
+                std::vector<index_t> outEdges(degree);
                 for (int j = 0; j < degree; j++) {
                     auto r = gen[i * degree + j];
                     outEdges[j] = dis(r);
@@ -180,7 +180,7 @@ struct knn_index {
 
         if (sort_neighbors) {
             parlay::parallel_for(0, G.size(), [&](long i) {
-                auto less = [&](indexType j, indexType k) {
+                auto less = [&](index_t j, index_t k) {
                     return Points[i].distance(Points[j]) < Points[i].distance(Points[k]);
                 };
                 G[i].sort(less);
@@ -188,8 +188,8 @@ struct knn_index {
         }
     }
 
-    void batch_insert(parlay::sequence<indexType> &inserts,
-                      GraphI &G, PR &Points, stats<indexType> &BuildStats, double alpha,
+    void batch_insert(parlay::sequence<index_t> &inserts,
+                      GraphI &G, PR &Points, stats<index_t> &BuildStats, double alpha,
                       bool random_order = false, double base = 2,
                       double max_fraction = .02, bool print = true) {
         for (int p: inserts) {
@@ -246,7 +246,7 @@ struct knn_index {
                 count = m;
             }
 
-            parlay::sequence<parlay::sequence<indexType>> new_out_(ceiling - floor);
+            parlay::sequence<parlay::sequence<index_t>> new_out_(ceiling - floor);
             // search for each node starting from the start_point, then call
             // robustPrune with the visited list as its candidate set
             t_beam.start();
@@ -256,7 +256,7 @@ struct knn_index {
                 int sp = BP.single_batch ? i : start_point;
                 QueryParams QP((long) 0, BP.L, (double) 0.0, (long) Points.size(), (long) G.max_degree());
                 auto [beam_visited, bs_distance_comps] =
-                        beam_search<Point, PointRange, indexType>(Points[index], G, Points, sp, QP);
+                        beam_search<Point, PointRange, index_t>(Points[index], G, Points, sp, QP);
                 auto [beam, visited] = beam_visited;
                 BuildStats.increment_dist(index, bs_distance_comps);
                 BuildStats.increment_visited(index, visited.size());
@@ -272,8 +272,8 @@ struct knn_index {
             t_bidirect.start();
 
             auto flattened = parlay::delayed::flatten(parlay::tabulate(ceiling - floor, [&](size_t i) {
-                indexType index = shuffled_inserts[i + floor];
-                return parlay::delayed::map(new_out_[i], [=](indexType ngh) {
+                index_t index = shuffled_inserts[i + floor];
+                return parlay::delayed::map(new_out_[i], [=](index_t ngh) {
                     return std::pair(ngh, index);
                 });
             }));

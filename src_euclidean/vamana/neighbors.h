@@ -26,7 +26,6 @@
 #include "../utils/beamSearch.h"
 #include "../utils/check_nn_recall.h"
 #include "../utils/parse_results.h"
-#include "../utils/mips_point.h"
 #include "../utils/euclidian_point.h"
 #include "../utils/stats.h"
 #include "../utils/types.h"
@@ -41,7 +40,7 @@ template<typename Point, typename PointRange, typename indexType>
 void ANN_build_index_(Graph<indexType> &G, BuildParams &BP, PointRange &Points) {
     parlay::internal::timer t("ANN");
 
-    using findex = knn_index<PointRange, indexType>;
+    using findex = knn_index<indexType>;
     findex I(BP);
     indexType start_point;
     double idx_time;

@@ -47,28 +47,27 @@ long dim_round_up(long dim, long tp_size) {
 }
 
 
-template<typename T_, class Point_>
 struct PointRange {
-    using T = T_;
-    using Point = Point_;
+    using Point = Euclidian_Point;
+    using dist_t = Point::dist_t;
     using parameters = typename Point::parameters;
 
     long dimension() const { return dims; }
 
     long aligned_dimension() const { return aligned_dims; }
 
-    PointRange() : values(std::shared_ptr<T[]>(nullptr, std::free)) { n = 0; }
+    PointRange() : values(std::shared_ptr<dist_t[]>(nullptr, std::free)) { n = 0; }
 
     template<typename PR>
     PointRange(const PR &pr, const parameters &p) : params(p) {
         n = pr.size();
         dims = pr.dimension();
-        aligned_dims = dim_round_up(dims, sizeof(T));
-        long num_bytes = n * aligned_dims * sizeof(T);
-        T *ptr = (T *) aligned_alloc(1l << 21, num_bytes);
+        aligned_dims = dim_round_up(dims, sizeof(dist_t));
+        long num_bytes = n * aligned_dims * sizeof(dist_t);
+        dist_t *ptr = (dist_t *) aligned_alloc(1l << 21, num_bytes);
         madvise(ptr, num_bytes, MADV_HUGEPAGE);
-        values = std::shared_ptr<T[]>(ptr, std::free);
-        T *vptr = values.get();
+        values = std::shared_ptr<dist_t[]>(ptr, std::free);
+        dist_t *vptr = values.get();
         parlay::parallel_for(0, n, [&](long i) {
             Point::translate_point(vptr + i * aligned_dims, pr[i], params);
         });
@@ -77,7 +76,7 @@ struct PointRange {
     template<typename PR>
     PointRange(PR &pr) : PointRange(pr, Point::generate_parameters(pr)) {}
 
-    PointRange(char *filename) : values(std::shared_ptr<T[]>(nullptr, std::free)) {
+    PointRange(char *filename) : values(std::shared_ptr<dist_t[]>(nullptr, std::free)) {
         if (filename == NULL) {
             n = 0;
             dims = 0;
@@ -95,22 +94,22 @@ struct PointRange {
         dims = d;
         params = parameters(d);
         std::cout << "Detected " << num_points << " points with dimension " << d << std::endl;
-        aligned_dims = dim_round_up(dims, sizeof(T));
+        aligned_dims = dim_round_up(dims, sizeof(dist_t));
         if (aligned_dims != dims) std::cout << "Aligning dimension to " << aligned_dims << std::endl;
-        long num_bytes = n * aligned_dims * sizeof(T);
-        T *ptr = (T *) aligned_alloc(1l << 21, num_bytes);
+        long num_bytes = n * aligned_dims * sizeof(dist_t);
+        dist_t *ptr = (dist_t *) aligned_alloc(1l << 21, num_bytes);
         madvise(ptr, num_bytes, MADV_HUGEPAGE);
-        values = std::shared_ptr<T[]>(ptr, std::free);
+        values = std::shared_ptr<dist_t[]>(ptr, std::free);
         size_t BLOCK_SIZE = 1000000;
         size_t index = 0;
         while (index < n) {
             size_t floor = index;
             size_t ceiling = index + BLOCK_SIZE <= n ? index + BLOCK_SIZE : n;
-            T *data_start = new T[(ceiling - floor) * dims];
-            reader.read((char *) (data_start), sizeof(T) * (ceiling - floor) * dims);
-            T *data_end = data_start + (ceiling - floor) * dims;
-            parlay::slice<T *, T *> data = parlay::make_slice(data_start, data_end);
-            int data_bytes = dims * sizeof(T);
+            dist_t *data_start = new dist_t[(ceiling - floor) * dims];
+            reader.read((char *) (data_start), sizeof(dist_t) * (ceiling - floor) * dims);
+            dist_t *data_end = data_start + (ceiling - floor) * dims;
+            parlay::slice<dist_t *, dist_t *> data = parlay::make_slice(data_start, data_end);
+            int data_bytes = dims * sizeof(dist_t);
             parlay::parallel_for(floor, ceiling, [&](size_t i) {
                 for (int j = 0; j < dims; j++)
                     values.get()[i * aligned_dims + j] = data[(i - floor) * dims + j];
@@ -136,7 +135,7 @@ struct PointRange {
     parameters params;
 
 private:
-    std::shared_ptr<T[]> values;
+    std::shared_ptr<dist_t[]> values;
     unsigned int dims;
     unsigned int aligned_dims;
     size_t n;

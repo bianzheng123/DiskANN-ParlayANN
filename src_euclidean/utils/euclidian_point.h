@@ -47,15 +47,17 @@ float euclidian_distance(const float *p, const float *q, unsigned d) {
 }
 
 // this looks like the union of the array
-template<typename T, long range = (1l << sizeof(T) * 8) - 1>
 struct Euclidian_Point {
-    using distanceType = float;
+    using dist_t = float;
+
+    const static long range = (1l << sizeof(dist_t) * 8) - 1;
 
     struct parameters {
         float slope;
         int32_t offset;
         int dims;
 
+        // the slop and offset are the parameter for scalar quantization
         parameters() : slope(0), offset(0), dims(0) {}
 
         parameters(int dims) : slope(0), offset(0), dims(dims) {}
@@ -66,11 +68,11 @@ struct Euclidian_Point {
                   dims(dims) {}
     };
 
-    static distanceType d_min() { return 0; }
+    static dist_t d_min() { return 0; }
 
     static bool is_metric() { return true; }
 
-    T operator[](long i) const { return *(values + i); }
+    dist_t operator[](long i) const { return *(values + i); }
 
     float distance(const Euclidian_Point &x) const {
         return euclidian_distance(this->values, x.values, params.dims);
@@ -87,7 +89,7 @@ struct Euclidian_Point {
     }
 
     void prefetch() const {
-        int l = (params.dims * sizeof(T) - 1) / 64 + 1;
+        int l = (params.dims * sizeof(dist_t) - 1) / 64 + 1;
         for (int i = 0; i < l; i++)
             __builtin_prefetch((char *) values + i * 64);
     }
@@ -96,7 +98,7 @@ struct Euclidian_Point {
 
     Euclidian_Point() : values(nullptr), id_(-1), params(0) {}
 
-    Euclidian_Point(T *values, long id, parameters params)
+    Euclidian_Point(dist_t *values, long id, parameters params)
             : values(values), id_(id), params(params) {}
 
     bool operator==(const Euclidian_Point &q) const {
@@ -113,7 +115,7 @@ struct Euclidian_Point {
     }
 
     template<typename Point>
-    static void translate_point(T *values, const Point &p, const parameters &params) {
+    static void translate_point(dist_t *values, const Point &p, const parameters &params) {
         float slope = params.slope;
         int32_t offset = params.offset;
         float min_val = std::floor(offset / slope);
@@ -130,7 +132,7 @@ struct Euclidian_Point {
                           << std::round(x * slope) - offset << ", " << slope << ", " << offset << std::endl;
                 abort();
             }
-            values[j] = (T) r;
+            values[j] = (dist_t) r;
         }
     }
 
@@ -138,8 +140,8 @@ struct Euclidian_Point {
     static parameters generate_parameters(const PR &pr) {
         long n = pr.size();
         int dims = pr.dimension();
-        parlay::sequence<typename PR::T> mins(n, 0.0);
-        parlay::sequence<typename PR::T> maxs(n, 0.0);
+        parlay::sequence<typename PR::dist_t> mins(n, 0.0);
+        parlay::sequence<typename PR::dist_t> maxs(n, 0.0);
         parlay::sequence<bool> ni(n, true);
         parlay::parallel_for(0, n, [&](long i) {
             for (int j = 0; j < dims; j++) {
@@ -152,8 +154,8 @@ struct Euclidian_Point {
         float max_val = *parlay::max_element(maxs);
         bool all_ints = *parlay::min_element(ni);
         if (all_ints)
-            if (sizeof(T) == 1 && max_val < 256) max_val = 255;
-            else if (sizeof(T) == 2 && max_val < 65536) max_val = 65536;
+            if (sizeof(dist_t) == 1 && max_val < 256) max_val = 255;
+            else if (sizeof(dist_t) == 2 && max_val < 65536) max_val = 65536;
         std::cout << "scalar quantization: min value = " << min_val
                   << ", max value = " << max_val << std::endl;
         return parameters(min_val, max_val, dims);
@@ -162,6 +164,6 @@ struct Euclidian_Point {
     parameters params;
 
 private:
-    T *values;
+    dist_t *values;
     long id_;
 };

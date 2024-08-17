@@ -39,12 +39,12 @@
 
 // main beam search
 template<typename indexType, typename Point, typename PointRange>
-std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::distanceType>>, parlay::sequence<std::pair<indexType, typename Point::distanceType>>>, size_t>
+std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::dist_t>>, parlay::sequence<std::pair<indexType, typename Point::dist_t>>>, size_t>
 beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
                  parlay::sequence<indexType> starting_points, QueryParams &QP);
 
 template<typename Point, typename PointRange, typename indexType>
-std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::distanceType>>, parlay::sequence<std::pair<indexType, typename Point::distanceType>>>, indexType>
+std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::dist_t>>, parlay::sequence<std::pair<indexType, typename Point::dist_t>>>, indexType>
 beam_search(Point p, Graph<indexType> &G, PointRange &Points,
             indexType starting_point, QueryParams &QP) {
 
@@ -53,7 +53,7 @@ beam_search(Point p, Graph<indexType> &G, PointRange &Points,
 }
 
 template<typename Point, typename PointRange, typename indexType>
-std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::distanceType>>, parlay::sequence<std::pair<indexType, typename Point::distanceType>>>, size_t>
+std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::dist_t>>, parlay::sequence<std::pair<indexType, typename Point::dist_t>>>, size_t>
 beam_search(Point p, Graph<indexType> &G, PointRange &Points,
             parlay::sequence<indexType> starting_points, QueryParams &QP) {
     return beam_search_impl<indexType>(p, G, Points, starting_points, QP);
@@ -61,7 +61,7 @@ beam_search(Point p, Graph<indexType> &G, PointRange &Points,
 
 // main beam search
 template<typename indexType, typename Point, typename PointRange>
-std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::distanceType>>, parlay::sequence<std::pair<indexType, typename Point::distanceType>>>, size_t>
+std::pair<std::pair<parlay::sequence<std::pair<indexType, typename Point::dist_t>>, parlay::sequence<std::pair<indexType, typename Point::dist_t>>>, size_t>
 beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
                  parlay::sequence<indexType> starting_points, QueryParams &QP) {
     if (starting_points.size() == 0) {
@@ -71,8 +71,8 @@ beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
 
     // compare two (node_id,distance) pairs, first by distance and then id if
     // equal
-    using distanceType = typename Point::distanceType;
-    auto less = [&](std::pair<indexType, distanceType> a, std::pair<indexType, distanceType> b) {
+    using dist_t = typename Point::dist_t;
+    auto less = [&](std::pair<indexType, dist_t> a, std::pair<indexType, dist_t> b) {
         return a.second < b.second || (a.second == b.second && a.first < b.first);
     };
 
@@ -91,19 +91,19 @@ beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
     // Frontier maintains the closest points found so far and its size
     // is always at most beamSize.  Each entry is a (id,distance) pair.
     // Initialized with starting points and kept sorted by distance.
-    std::vector<std::pair<indexType, distanceType>> frontier;
+    std::vector<std::pair<indexType, dist_t>> frontier;
     frontier.reserve(QP.beamSize);
     for (auto q: starting_points)
-        frontier.push_back(std::pair<indexType, distanceType>(q, Points[q].distance(p)));
+        frontier.push_back(std::pair<indexType, dist_t>(q, Points[q].distance(p)));
     std::sort(frontier.begin(), frontier.end(), less);
 
     // The subset of the frontier that has not been visited
     // Use the first of these to pick next vertex to visit.
-    std::vector<std::pair<indexType, distanceType>> unvisited_frontier(QP.beamSize);
+    std::vector<std::pair<indexType, dist_t>> unvisited_frontier(QP.beamSize);
     unvisited_frontier[0] = frontier[0];
 
     // maintains sorted set of visited vertices (id-distance pairs)
-    std::vector<std::pair<indexType, distanceType>> visited;
+    std::vector<std::pair<indexType, dist_t>> visited;
     visited.reserve(2 * QP.beamSize);
 
     // counters
@@ -113,9 +113,9 @@ beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
     double total;
 
     // used as temporaries in the loop
-    std::vector<std::pair<indexType, distanceType>> new_frontier(
+    std::vector<std::pair<indexType, dist_t>> new_frontier(
             std::max<size_t>(QP.beamSize, starting_points.size()) + G.max_degree());
-    std::vector<std::pair<indexType, distanceType>> candidates;
+    std::vector<std::pair<indexType, dist_t>> candidates;
     candidates.reserve(G.max_degree());
     std::vector<indexType> keep;
     keep.reserve(G.max_degree());
@@ -125,7 +125,7 @@ beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
     while (remain > 0 && num_visited < QP.limit) {
         // the next node to visit is the unvisited frontier node that is closest to
         // p
-        std::pair<indexType, distanceType> current = unvisited_frontier[0];
+        std::pair<indexType, dist_t> current = unvisited_frontier[0];
         G[current.first].prefetch();
         // add to visited set
         visited.insert(
@@ -149,11 +149,11 @@ beam_search_impl(Point p, Graph<indexType> &G, PointRange &Points,
 
         // Further filter on whether distance is greater than current
         // furthest distance in current frontier (if full).
-        distanceType cutoff = ((frontier.size() < QP.beamSize)
-                               ? (distanceType) std::numeric_limits<int>::max()
+        dist_t cutoff = ((frontier.size() < QP.beamSize)
+                               ? (dist_t) std::numeric_limits<int>::max()
                                : frontier[frontier.size() - 1].second);
         for (auto a: keep) {
-            distanceType dist = Points[a].distance(p);
+            dist_t dist = Points[a].distance(p);
             dist_cmps++;
             // skip if frontier not full and distance too large
             if (dist >= cutoff) continue;
@@ -254,7 +254,7 @@ beam_search_rerank(const Point &p,
     int exp_factor = 5;
 
     // recalculate distances with non-quantized points and sort
-    std::vector<std::pair<indexType, typename Point::distanceType>> pts;
+    std::vector<std::pair<indexType, typename Point::dist_t>> pts;
     for (auto [j, ignore]: parlay::tabulate(std::min<int>(QP.k * exp_factor, beamElts.size()),
                                             [&](long i) { return beamElts[i]; }))
         pts.push_back(std::pair(j, p.distance(Base_Points[j])));

@@ -32,7 +32,6 @@
 #include "utils/NSGDist.h"
 #include "utils/euclidian_point.h"
 #include "utils/point_range.h"
-#include "utils/mips_point.h"
 #include "utils/graph.h"
 
 //#include "vamana/index.h"
@@ -50,8 +49,6 @@
 //  TIMING
 // *************************************************************
 
-using uint = unsigned int;
-
 
 template<typename Point, typename PointRange, typename indexType>
 void time_build_index(Graph<indexType> &G, BuildParams &BP, PointRange &Points,
@@ -64,18 +61,16 @@ void time_build_index(Graph<indexType> &G, BuildParams &BP, PointRange &Points,
               },
               [&]() {});
 
-    if (outFile != NULL) {
-        G.save(outFile);
-    }
+    assert(outFile != NULL);
 
-
+    G.save(outFile);
 }
 
 int main(int argc, char *argv[]) {
     commandLine P(argc, argv,
                   "[-a <alpha>] [-R <deg>] [-L <bm>]"
                   "[-graph_outfile <oF>] [-base_path <b>]"
-                  "[-dist_func <df>] [-num_passes <np>] <inFile>");
+                  "[-num_passes <np>] <inFile>");
 
     double alpha = P.getOptionDoubleValue("-alpha", 1.0);
     long R = P.getOptionIntValue("-R", 0);
@@ -86,47 +81,25 @@ int main(int argc, char *argv[]) {
     char *oFile = P.getOptionValue("-graph_outfile");
     char *iFile = P.getOptionValue("-base_path");
 
-    char *dfc = P.getOptionValue("-dist_func");
     int num_passes = P.getOptionIntValue("-num_passes", 1);
     bool normalize = P.getOption("-normalize");
     int single_batch = P.getOptionIntValue("-single_batch", 0);
 
-    std::string df = std::string(dfc);
-
     BuildParams BP = BuildParams(R, L, alpha, num_passes, single_batch);
     long maxDeg = BP.max_degree();
 
-    if (df != "Euclidian" && df != "mips") {
-        std::cout << "Error: specify distance type Euclidian or mips" << std::endl;
-        abort();
+    PointRange Points = PointRange(iFile);
+    if (normalize) {
+        std::cout << "normalizing data" << std::endl;
+        for (int i = 0; i < Points.size(); i++)
+            Points[i].normalize();
     }
-
-    if (df == "Euclidian") {
-        PointRange<float, Euclidian_Point<float>> Points = PointRange<float, Euclidian_Point<float>>(iFile);
-        if (normalize) {
-            std::cout << "normalizing data" << std::endl;
-            for (int i = 0; i < Points.size(); i++)
-                Points[i].normalize();
-        }
-        Graph<unsigned int> G = Graph<unsigned int>(maxDeg, Points.size());
-        using Point = Euclidian_Point<float>;
-        using PR = PointRange<float, Point>;
-        time_build_index<Point, PR, uint>(G, BP, Points,
+    Graph<uint32_t> G = Graph<uint32_t>(maxDeg, Points.size());
+    using Point = Euclidian_Point;
+    using PR = PointRange;
+    time_build_index<Point, PR, uint32_t>(G, BP, Points,
                                           oFile);
 
-    } else if (df == "mips") {
-        PointRange<float, Mips_Point<float>> Points = PointRange<float, Mips_Point<float>>(iFile);
-        if (normalize) {
-            std::cout << "normalizing data" << std::endl;
-            for (int i = 0; i < Points.size(); i++)
-                Points[i].normalize();
-        }
-        Graph<unsigned int> G = Graph<unsigned int>(maxDeg, Points.size());
-        using Point = Mips_Point<float>;
-        using PR = PointRange<float, Point>;
-        time_build_index<Point, PR, uint>(G, BP, Points,
-                                          oFile);
-    }
 
     return 0;
 }

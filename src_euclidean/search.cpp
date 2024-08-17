@@ -32,7 +32,6 @@
 #include "utils/NSGDist.h"
 #include "utils/euclidian_point.h"
 #include "utils/point_range.h"
-#include "utils/mips_point.h"
 #include "utils/graph.h"
 
 //#include "vamana/index.h"
@@ -49,8 +48,6 @@
 // *************************************************************
 //  TIMING
 // *************************************************************
-
-using uint = unsigned int;
 
 
 template<typename Point, typename PointRange, typename indexType>
@@ -75,7 +72,7 @@ int main(int argc, char *argv[]) {
                   "[-R <deg>] [-L <bm>] [-a <alpha>]"
                   "[-k <k> ]  [-gt_path <g>] [-query_path <qF>]"
                   "[-graph_path <gF>] [-res_path <rF>]" "[-num_passes <np>]"
-                  "[-dist_func <df>] [-base_path <b>] <inFile>");
+                  "[-base_path <b>] <inFile>");
 
     long R = P.getOptionIntValue("-R", 0);
     if (R < 0) P.badArgument();
@@ -92,57 +89,31 @@ int main(int argc, char *argv[]) {
     long k = P.getOptionIntValue("-k", 0);
     if (k > 1000 || k < 0) P.badArgument();
     int num_passes = P.getOptionIntValue("-num_passes", 1);
-    char *dfc = P.getOptionValue("-dist_func");
     bool verbose = P.getOption("-verbose");
     bool normalize = P.getOption("-normalize");
     int single_batch = P.getOptionIntValue("-single_batch", 0);
 
-    std::string df = std::string(dfc);
-
     BuildParams BP = BuildParams(R, L, alpha, num_passes, verbose,
                                  single_batch);
 
-    if (df != "Euclidian" && df != "mips") {
-        std::cout << "Error: specify distance type Euclidian or mips" << std::endl;
-        abort();
+    groundTruth<uint32_t> GT = groundTruth<uint32_t>(cFile);
+
+    PointRange Points = PointRange(iFile);
+    PointRange Query_Points = PointRange(qFile);
+    if (normalize) {
+        std::cout << "normalizing data" << std::endl;
+        for (int i = 0; i < Points.size(); i++)
+            Points[i].normalize();
+        for (int i = 0; i < Query_Points.size(); i++)
+            Query_Points[i].normalize();
     }
-
-    groundTruth<uint> GT = groundTruth<uint>(cFile);
-
-    if (df == "Euclidian") {
-        PointRange<float, Euclidian_Point<float>> Points = PointRange<float, Euclidian_Point<float>>(iFile);
-        PointRange<float, Euclidian_Point<float>> Query_Points = PointRange<float, Euclidian_Point<float>>(qFile);
-        if (normalize) {
-            std::cout << "normalizing data" << std::endl;
-            for (int i = 0; i < Points.size(); i++)
-                Points[i].normalize();
-            for (int i = 0; i < Query_Points.size(); i++)
-                Query_Points[i].normalize();
-        }
-        Graph<unsigned int> G = Graph<unsigned int>(gFile);
-        using Point = Euclidian_Point<float>;
-        using PR = PointRange<float, Point>;
-        time_search<Point, PR, uint>(Points, G, BP,
+    Graph<uint32_t> G = Graph<uint32_t>(gFile);
+    using Point = Euclidian_Point;
+    using PR = PointRange;
+    time_search<Point, PR, uint32_t>(Points, G, BP,
                                      Query_Points, k,
                                      GT, rFile);
 
-    } else if (df == "mips") {
-        PointRange<float, Mips_Point<float>> Points = PointRange<float, Mips_Point<float>>(iFile);
-        PointRange<float, Mips_Point<float>> Query_Points = PointRange<float, Mips_Point<float>>(qFile);
-        if (normalize) {
-            std::cout << "normalizing data" << std::endl;
-            for (int i = 0; i < Points.size(); i++)
-                Points[i].normalize();
-            for (int i = 0; i < Query_Points.size(); i++)
-                Query_Points[i].normalize();
-        }
-        Graph<unsigned int> G = Graph<unsigned int>(gFile);
-        using Point = Mips_Point<float>;
-        using PR = PointRange<float, Point>;
-        time_search<Point, PR, uint>(Points, G, BP,
-                                     Query_Points, k,
-                                     GT, rFile);
-    }
 
     return 0;
 }
