@@ -36,13 +36,13 @@
 #include "parlay/random.h"
 
 
-template<typename Point, typename PointRange, typename indexType>
-void ANN_build_index_(Graph<indexType> &G, BuildParams &BP, PointRange &Points) {
+template<typename index_t>
+void ANN_build_index_(Graph<index_t> &G, BuildParams &BP, PointRange &Points) {
     parlay::internal::timer t("ANN");
 
-    using findex = knn_index<indexType>;
+    using findex = knn_index<index_t>;
     findex I(BP);
-    indexType start_point;
+    index_t start_point;
     double idx_time;
     // declare two array, visited and distances
     stats<unsigned int> BuildStats(G.size());
@@ -66,22 +66,22 @@ void ANN_build_index_(Graph<indexType> &G, BuildParams &BP, PointRange &Points) 
 
 }
 
-template<typename Point, typename PointRange_, typename indexType>
-void ANN_build_index(Graph<indexType> &G, BuildParams &BP, PointRange_ &Points) {
+template<typename index_t>
+void ANN_build_index(Graph<index_t> &G, BuildParams &BP, PointRange &Points) {
 
-    ANN_build_index_<Point, PointRange_, indexType>(G, BP, Points);
+    ANN_build_index_<index_t>(G, BP, Points);
 }
 
 
-template<typename Point, typename PointRange, typename QPointRange, typename indexType>
-void ANN_search_(Graph<indexType> &G, long k, BuildParams &BP,
-                 PointRange &Query_Points, QPointRange &Q_Query_Points,
-                 groundTruth<indexType> GT, char *res_file,
-                 PointRange &Points, QPointRange &Q_Points) {
+template<typename index_t>
+void ANN_search_(Graph<index_t> &G, long k, BuildParams &BP,
+                 PointRange &Query_Points, PointRange &Q_Query_Points,
+                 groundTruth<index_t> GT, char *res_file,
+                 PointRange &Points, PointRange &Q_Points) {
     parlay::internal::timer t("ANN");
 
     double idx_time = 0;
-    indexType start_point = 0;
+    index_t start_point = 0;
     // declare two array, visited and distances
     stats<unsigned int> BuildStats(G.size());
     std::cout << "start index = " << start_point << std::endl;
@@ -100,19 +100,19 @@ void ANN_search_(Graph<indexType> &G, long k, BuildParams &BP,
                                                           [](auto x) { return (long) x; }));
 
     assert(Query_Points.size() != 0);
-    search_and_parse<Point, PointRange, QPointRange, indexType>(G_, G, Points, Query_Points,
-                                                                Q_Points, Q_Query_Points, GT,
-                                                                res_file, k, start_point,
-                                                                BP.verbose);
+    search_and_parse<index_t>(G_, G, Points, Query_Points,
+                              Q_Points, Q_Query_Points, GT,
+                              res_file, k, start_point,
+                              BP.verbose);
 
 }
 
-template<typename Point, typename PointRange_, typename indexType>
-void ANN_search(PointRange_ &Points, Graph<indexType> &G, BuildParams &BP,
-                PointRange_ &Query_Points, long k,
-                groundTruth<indexType> GT, char *res_file) {
+template<typename index_t>
+void ANN_search(PointRange &Points, Graph<index_t> &G, BuildParams &BP,
+                PointRange &Query_Points, long k,
+                groundTruth<index_t> GT, char *res_file) {
 
-    ANN_search_<Point, PointRange_, PointRange_, indexType>(G, k, BP,
-                                                            Query_Points, Query_Points, GT, res_file,
-                                                            Points, Points);
+    ANN_search_<index_t>(G, k, BP,
+                         Query_Points, Query_Points, GT, res_file,
+                         Points, Points);
 }

@@ -31,14 +31,14 @@
 #include "types.h"
 #include "stats.h"
 
-template<typename Point, typename PointRange, typename QPointRange, typename indexType>
+template<typename index_t>
 nn_result checkRecall(
-        Graph<indexType> &G,
+        Graph<index_t> &G,
         PointRange &Base_Points,
         PointRange &Query_Points,
-        QPointRange &Q_Base_Points,
-        QPointRange &Q_Query_Points,
-        groundTruth<indexType> GT,
+        PointRange &Q_Base_Points,
+        PointRange &Q_Query_Points,
+        groundTruth<index_t> GT,
         long start_point,
         long k,
         QueryParams &QP,
@@ -49,39 +49,39 @@ nn_result checkRecall(
         abort();
     }
 
-    parlay::sequence<parlay::sequence<indexType>> all_ngh;
+    parlay::sequence<parlay::sequence<index_t>> all_ngh;
 
     parlay::internal::timer t;
     float query_time;
-    stats<indexType> QueryStats(Query_Points.size());
+    stats<index_t> QueryStats(Query_Points.size());
     QueryStats.clear();
     // to help clear the cache between runs
     auto volatile xx = parlay::random_permutation<long>(5000000);
     t.next_time();
-    all_ngh = qsearchAll<Point, PointRange, QPointRange, indexType>(Query_Points, Q_Query_Points, G, Base_Points,
-                                                                    Q_Base_Points, QueryStats, start_point, QP);
+    all_ngh = qsearchAll<index_t>(Query_Points, Q_Query_Points, G, Base_Points,
+                                  Q_Base_Points, QueryStats, start_point, QP);
     query_time = t.next_time();
 
     size_t n = Query_Points.size();
 
     // compute recall
     int numCorrect = 0;
-    for (indexType i = 0; i < n; i++) {
+    for (index_t i = 0; i < n; i++) {
         parlay::sequence<int> results_with_ties;
-        for (indexType l = 0; l < k; l++)
+        for (index_t l = 0; l < k; l++)
             results_with_ties.push_back(GT.coordinates(i, l));
-        Point qp = Query_Points[i];
+        PointRange::Point qp = Query_Points[i];
         float last_dist = qp.distance(Base_Points[GT.coordinates(i, k - 1)]);
         //float last_dist = GT.distances(i, k-1);
-        for (indexType l = k; l < GT.dimension(); l++) {
+        for (index_t l = k; l < GT.dimension(); l++) {
             //if (GT.distances(i,l) == last_dist) {
             if (qp.distance(Base_Points[GT.coordinates(i, l)]) == last_dist) {
                 results_with_ties.push_back(GT.coordinates(i, l));
             }
         }
         std::set<int> reported_neighbor_s;
-        for (indexType l = 0; l < k; l++) reported_neighbor_s.insert((all_ngh[i])[l]);
-        for (indexType l = 0; l < results_with_ties.size(); l++) {
+        for (index_t l = 0; l < k; l++) reported_neighbor_s.insert((all_ngh[i])[l]);
+        for (index_t l = 0; l < results_with_ties.size(); l++) {
             if (reported_neighbor_s.find(results_with_ties[l]) != reported_neighbor_s.end()) {
                 numCorrect += 1;
             }
@@ -98,7 +98,7 @@ nn_result checkRecall(
                   << ", QPS=" << QPS << std::endl;
 
     auto stats_ = {QueryStats.dist_stats(), QueryStats.visited_stats()};
-    parlay::sequence<indexType> stats = parlay::flatten(stats_);
+    parlay::sequence<index_t> stats = parlay::flatten(stats_);
     nn_result N(recall, stats, QPS, k, QP.beamSize, QP.cut, Query_Points.size(), QP.limit, QP.degree_limit, k);
     return N;
 }
@@ -146,15 +146,15 @@ parlay::sequence<long> calculate_limits(size_t upper_bound) {
     return L; //limits;
 }
 
-template<typename Point, typename PointRange, typename QPointRange, typename indexType>
+template<typename index_t>
 void search_and_parse(Graph_ G_,
-                      Graph<indexType> &G,
+                      Graph<index_t> &G,
                       PointRange &Base_Points,
                       PointRange &Query_Points,
-                      QPointRange &Q_Base_Points,
-                      QPointRange &Q_Query_Points,
-                      groundTruth<indexType> GT, char *res_file, long k,
-                      indexType start_point = 0,
+                      PointRange &Q_Base_Points,
+                      PointRange &Q_Query_Points,
+                      groundTruth<index_t> GT, char *res_file, long k,
+                      index_t start_point = 0,
                       bool verbose = false) {
     parlay::sequence<nn_result> results;
     std::vector<long> beams;
@@ -180,10 +180,10 @@ void search_and_parse(Graph_ G_,
                 QP.beamSize = Q;
                 if (Q > r) {
                     results.push_back(
-                            checkRecall<Point, PointRange, QPointRange, indexType>(G, Base_Points, Query_Points,
-                                                                                   Q_Base_Points, Q_Query_Points, GT,
-                                                                                   start_point, r, QP,
-                                                                                   verbose));
+                            checkRecall<index_t>(G, Base_Points, Query_Points,
+                                                 Q_Base_Points, Q_Query_Points, GT,
+                                                 start_point, r, QP,
+                                                 verbose));
                 }
             }
         }
@@ -199,19 +199,19 @@ void search_and_parse(Graph_ G_,
             QP.beamSize = std::max<long>(l, r);
             for (long dl: degree_limits) {
                 QP.degree_limit = dl;
-                results.push_back(checkRecall<Point, PointRange, QPointRange, indexType>(G,
-                                                                                         Base_Points, Query_Points,
-                                                                                         Q_Base_Points, Q_Query_Points,
-                                                                                         GT, start_point, r, QP,
-                                                                                         verbose));
+                results.push_back(checkRecall<index_t>(G,
+                                                       Base_Points, Query_Points,
+                                                       Q_Base_Points, Q_Query_Points,
+                                                       GT, start_point, r, QP,
+                                                       verbose));
             }
         }
         // check "best accuracy"
         QP = QueryParams((long) 100, (long) 1000, (double) 10.0, (long) G.size(), (long) G.max_degree());
         results.push_back(
-                checkRecall<Point, PointRange, QPointRange, indexType>(G, Base_Points, Query_Points, Q_Base_Points,
-                                                                       Q_Query_Points, GT, start_point, r, QP,
-                                                                       verbose));
+                checkRecall<index_t>(G, Base_Points, Query_Points, Q_Base_Points,
+                                     Q_Query_Points, GT, start_point, r, QP,
+                                     verbose));
 
         parlay::sequence<float> buckets = {.1, .2, .3, .4, .5, .6, .7, .75, .8, .85,
                                            .9, .93, .95, .97, .98, .99, .995, .999, .9995,
@@ -223,16 +223,16 @@ void search_and_parse(Graph_ G_,
     }
 }
 
-template<typename Point, typename PointRange, typename indexType>
+template<typename index_t>
 void search_and_parse(Graph_ G_,
-                      Graph<indexType> &G,
+                      Graph<index_t> &G,
                       PointRange &Base_Points,
                       PointRange &Query_Points,
-                      groundTruth<indexType> GT, char *res_file, long k,
-                      indexType start_point = 0,
+                      groundTruth<index_t> GT, char *res_file, long k,
+                      index_t start_point = 0,
                       bool verbose = false) {
-    search_and_parse<Point>(G_, G, Base_Points, Query_Points, Base_Points, Query_Points, GT,
-                            res_file, k, start_point, verbose);
+    search_and_parse(G_, G, Base_Points, Query_Points, Base_Points, Query_Points, GT,
+                     res_file, k, start_point, verbose);
 }
 
 

@@ -50,18 +50,18 @@
 // *************************************************************
 
 
-template<typename Point, typename PointRange, typename indexType>
-void time_search(PointRange &Points, Graph<indexType> &G, BuildParams &BP,
+template<typename index_t>
+void time_search(PointRange &Points, Graph<index_t> &G, BuildParams &BP,
                  PointRange &Query_Points, long k,
-                 groundTruth<indexType> GT, char *res_file) {
+                 groundTruth<index_t> GT, char *res_file) {
 
 
     time_loop(1, 0,
               [&]() {},
               [&]() {
-                  ANN_search<Point, PointRange, indexType>(Points, G, BP,
-                                                           Query_Points, k,
-                                                           GT, res_file);
+                  ANN_search<index_t>(Points, G, BP,
+                                      Query_Points, k,
+                                      GT, res_file);
               },
               [&]() {});
 
@@ -108,9 +108,7 @@ int main(int argc, char *argv[]) {
             Query_Points[i].normalize();
     }
     Graph<uint32_t> G = Graph<uint32_t>(gFile);
-    using Point = Euclidian_Point;
-    using PR = PointRange;
-    time_search<Point, PR, uint32_t>(Points, G, BP,
+    time_search<uint32_t>(Points, G, BP,
                                      Query_Points, k,
                                      GT, rFile);
 

@@ -50,14 +50,14 @@
 // *************************************************************
 
 
-template<typename Point, typename PointRange, typename indexType>
-void time_build_index(Graph<indexType> &G, BuildParams &BP, PointRange &Points,
+template<typename index_t>
+void time_build_index(Graph<index_t> &G, BuildParams &BP, PointRange &Points,
                       char *outFile) {
 
     time_loop(1, 0,
               [&]() {},
               [&]() {
-                  ANN_build_index<Point, PointRange, indexType>(G, BP, Points);
+                  ANN_build_index<index_t>(G, BP, Points);
               },
               [&]() {});
 
@@ -95,10 +95,8 @@ int main(int argc, char *argv[]) {
             Points[i].normalize();
     }
     Graph<uint32_t> G = Graph<uint32_t>(maxDeg, Points.size());
-    using Point = Euclidian_Point;
-    using PR = PointRange;
-    time_build_index<Point, PR, uint32_t>(G, BP, Points,
-                                          oFile);
+    time_build_index<uint32_t>(G, BP, Points,
+                               oFile);
 
 
     return 0;
