@@ -17,3 +17,8 @@ target_link_libraries(main_search PRIVATE Parlay::parlay)
 add_executable(main_cpy src_cpy/neighborsTime.cpp)
 target_link_libraries(main_cpy PRIVATE Parlay::parlay)
 
+add_executable(main_euc_build_index src_euclidean/build_index.cpp)
+target_link_libraries(main_euc_build_index PRIVATE Parlay::parlay)
+
+add_executable(main_euc_search src_euclidean/search.cpp)
+target_link_libraries(main_euc_search PRIVATE Parlay::parlay)

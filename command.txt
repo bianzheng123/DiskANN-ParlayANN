@@ -35,6 +35,12 @@ build the graph index:
 retrieval:
 ./main_search -R 32 -L 64 -a 1.2 -graph_path ../data/siftsmall/siftsmall_learn_32_64 -query_path ../data/siftsmall/siftsmall_query.fbin -gt_path ../data/siftsmall/siftsmall-100K -dist_func Euclidian -base_path ../data/siftsmall/siftsmall_learn.fbin
 
+build the graph index:
+./main_euc_build_index -R 32 -L 64 -alpha 1.2 -graph_outfile ../data/siftsmall/siftsmall_learn_32_64 -base_path ../data/siftsmall/siftsmall_learn.fbin -dist_func Euclidian
+
+retrieval:
+./main_euc_search -R 32 -L 64 -a 1.2 -graph_path ../data/siftsmall/siftsmall_learn_32_64 -query_path ../data/siftsmall/siftsmall_query.fbin -gt_path ../data/siftsmall/siftsmall-100K -dist_func Euclidian -base_path ../data/siftsmall/siftsmall_learn.fbin
+
 
 Graph has average degree 26.5858 and maximum degree 32
 Graph built in 0 seconds
